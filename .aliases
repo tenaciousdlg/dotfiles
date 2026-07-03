@@ -1,0 +1,8 @@
+# Tooling shortcuts
+alias tf="terraform"
+alias k="kubectl"
+alias awsh="ssh -i '$HOME/.ssh/dlg-aws.pem'"
+
+# Shell config
+alias zshconfig="code ~/.zshrc"
+alias mtr="sudo mtr"

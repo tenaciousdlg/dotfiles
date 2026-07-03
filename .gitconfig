@@ -1,0 +1,7 @@
+[user]
+	name = chris de la garza
+	email = chris@chrisdlg.com
+[credential]
+	helper = osxkeychain
+[core]
+	excludesfile = /Users/dlg/.gitignore

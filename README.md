@@ -20,6 +20,20 @@ env loading, kube context/namespace switching (`kctx`/`kns`), and fuzzy
 history/file search (Ctrl-R/Ctrl-T/Alt-C). All four are hooked into `.zshrc`
 behind `command -v` checks, so a machine without them just skips the hook.
 
+## One-time CLI setup (not managed by bootstrap.sh)
+
+Some tool state lives outside `$HOME`'s dotfiles and isn't symlinked, but is
+worth reproducing on a fresh machine:
+
+```bash
+# Azure CLI: default output is raw JSON and prints experimental-command
+# warnings on every call — table output + quieter logging matches how
+# aws/gcloud output already behaves here.
+az config set core.output=table
+az config set core.only_show_errors=true
+az config set core.collect_telemetry=no
+```
+
 ## Install
 
 ```bash

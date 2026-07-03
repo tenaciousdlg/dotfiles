@@ -26,6 +26,7 @@ link "$DOTFILES_DIR/.aliases" "$HOME/.aliases"
 link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 link "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
+link "$DOTFILES_DIR/gitignore_global" "$HOME/.gitignore"
 
 mkdir -p "$HOME/bin"
 for f in "$DOTFILES_DIR"/bin/*; do

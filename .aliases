@@ -3,6 +3,22 @@ alias tf="terraform"
 alias k="kubectl"
 alias awsh="ssh -i '$HOME/.ssh/dlg-aws.pem'"
 
+# Terraform demo lifecycle
+alias tfup="tf apply --auto-approve"
+alias tfdown="tf destroy --auto-approve"
+alias tfteleport='eval "$(tctl terraform env)"'
+
+# AWS
+alias awswho="aws sts get-caller-identity"
+alias ekslogin="aws eks update-kubeconfig --region us-east-2 --name presales-cluster"
+
+# Teleport
+alias tinv="tctl inventory ls"
+
+# kubectx/kubens installed via Homebrew — swap kube contexts/namespaces fast
+alias kctx="kubectx"
+alias kns="kubens"
+
 # Shell config
 alias zshconfig="code ~/.zshrc"
 alias mtr="sudo mtr"

@@ -7,9 +7,17 @@ of sync.
 
 ## Layout
 
-- `.zshrc`, `.aliases`, `.gitconfig`, `.vimrc`, `.p10k.zsh` — symlinked directly into `$HOME`
+- `.zshrc`, `.aliases`, `.gitconfig`, `.vimrc`, `.p10k.zsh`, `gitignore_global` (→ `~/.gitignore`) — symlinked directly into `$HOME`
 - `functions/*.zsh` — sourced automatically by `.zshrc`
 - `bin/*` — symlinked into `~/bin`
+- `templates/` — reusable snippets to copy into other projects (not symlinked); see `templates/direnv-1password/README.md`
+
+## Tools this config expects
+
+`brew install zoxide direnv kubectx fzf` — frecency-based `cd` (`z`), per-project
+env loading, kube context/namespace switching (`kctx`/`kns`), and fuzzy
+history/file search (Ctrl-R/Ctrl-T/Alt-C). All four are hooked into `.zshrc`
+behind `command -v` checks, so a machine without them just skips the hook.
 
 ## Install
 

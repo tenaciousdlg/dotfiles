@@ -41,6 +41,15 @@ fi
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# zoxide: frecency-based `cd` (use `z <partial-name>`)
+command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
+
+# direnv: per-project env loading via .envrc
+command -v direnv > /dev/null && eval "$(direnv hook zsh)"
+
+# fzf: fuzzy history/file search (Ctrl-R, Ctrl-T, Alt-C)
+command -v fzf > /dev/null && eval "$(fzf --zsh)"
+
 # Google Cloud SDK
 if [ -f "$HOME/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/google-cloud-sdk/path.zsh.inc"; fi
 if [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/google-cloud-sdk/completion.zsh.inc"; fi

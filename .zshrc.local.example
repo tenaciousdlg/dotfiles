@@ -1,0 +1,12 @@
+# Copy to ~/.zshrc.local (never tracked — see gitignore_global) for anything
+# tied to a specific account/org that shouldn't be public: account IDs,
+# internal hostnames, per-machine profile names, etc.
+
+# Makes `aws` default to this profile everywhere instead of requiring
+# --profile on every invocation (mirrors gcloud's persistent active config).
+# Find your profile name with: aws configure list-profiles
+export AWS_PROFILE="<your-sso-profile-name>"
+
+# Some AWS SDKs (not just the CLI) only read ~/.aws/config profiles, not just
+# ~/.aws/credentials, when this is set — needed for AWS_PROFILE to fully work.
+export AWS_SDK_LOAD_CONFIG=1

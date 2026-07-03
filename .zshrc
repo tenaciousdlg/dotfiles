@@ -56,3 +56,6 @@ if [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/google-clou
 
 # Shell integration for VS Code
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+
+# Machine/account-specific overrides that shouldn't be public (see .zshrc.local.example)
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"

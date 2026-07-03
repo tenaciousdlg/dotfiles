@@ -8,8 +8,10 @@ alias tfup="tf apply --auto-approve"
 alias tfdown="tf destroy --auto-approve"
 alias tfteleport='eval "$(tctl terraform env)"'
 
-# AWS
+# AWS (relies on AWS_PROFILE being set — see .zshrc.local.example)
 alias awswho="aws sts get-caller-identity"
+alias awslogin="aws sso login"
+alias awslogout="aws sso logout"
 alias ekslogin="aws eks update-kubeconfig --region us-east-2 --name presales-cluster"
 
 # Teleport

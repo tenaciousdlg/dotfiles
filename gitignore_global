@@ -23,3 +23,6 @@ node_modules
 
 # direnv — per-project env loading, never commit (may pull secrets at runtime)
 .envrc
+
+# machine/account-specific shell overrides — see .zshrc.local.example
+.zshrc.local

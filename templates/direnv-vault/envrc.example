@@ -1,0 +1,25 @@
+# Copy to <project>/.envrc, adjust proxy/cluster values as needed, then run
+# `direnv allow`. Replaces manually re-pasting TF_VAR_* exports (and secrets)
+# into every shell.
+#
+# Requires the local Vault container to be unsealed (see
+# ~/Documents/teleport/demos/docker_vault) and VAULT_ADDR set (already
+# exported in .zshrc). Vault CLI reads the token from ~/.vault-token
+# automatically — no need to export VAULT_TOKEN here.
+
+export TF_VAR_user="${USER}@goteleport.com"
+export TF_VAR_proxy_address="presales.teleportdemo.com"
+export TF_VAR_teleport_version="$(curl -s https://updates.releases.teleport.dev/v1/stable/cloud/version | sed 's/v//')"
+export TF_VAR_domain_name="teleportdemo.com"
+
+# Secrets: pulled from the local Vault at directory-enter time, never written
+# to disk or shell history in plaintext. Populate these once with:
+#   vault kv put secret/demo/okta-integrator api_token=... metadata_url=...
+#   vault kv put secret/demo/teleport-scim client_id=... client_secret=...
+#   vault kv put secret/demo/slack-bot token=... channel_id=...
+export TF_VAR_okta_api_token="$(vault kv get -field=api_token secret/demo/okta-integrator)"
+export TF_VAR_okta_metadata_url="$(vault kv get -field=metadata_url secret/demo/okta-integrator)"
+export TF_VAR_teleport_scim_client_id="$(vault kv get -field=client_id secret/demo/teleport-scim)"
+export TF_VAR_teleport_scim_client_secret="$(vault kv get -field=client_secret secret/demo/teleport-scim)"
+export TF_VAR_slack_bot_token="$(vault kv get -field=token secret/demo/slack-bot)"
+export TF_VAR_slack_channel_id="$(vault kv get -field=channel_id secret/demo/slack-bot)"

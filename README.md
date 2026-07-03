@@ -8,9 +8,10 @@ of sync.
 ## Layout
 
 - `.zshrc`, `.aliases`, `.gitconfig`, `.vimrc`, `.p10k.zsh`, `gitignore_global` (→ `~/.gitignore`) — symlinked directly into `$HOME`
+- `.zshrc.local.example` — template for machine/account-specific values that shouldn't be public (real file lives at `~/.zshrc.local`, gitignored, sourced automatically if present)
 - `functions/*.zsh` — sourced automatically by `.zshrc`
 - `bin/*` — symlinked into `~/bin`
-- `templates/` — reusable snippets to copy into other projects (not symlinked); see `templates/direnv-1password/README.md`
+- `templates/` — reusable snippets to copy into other projects (not symlinked); see `templates/direnv-vault/README.md`
 
 ## Tools this config expects
 

@@ -11,6 +11,8 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
   aws
+  docker
+  docker-compose
   git
   kubectl
   minikube

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Streamlined terraform plan: shows resource change summary, suppresses verbose diffs.
+# Usage: tfplan [terraform plan args...]
+# Full diff: terraform show tfplan.bin
+
+set -euo pipefail
+
+PLAN_FILE="${TFPLAN_FILE:-tfplan.bin}"
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+
+echo "Running terraform plan..."
+terraform plan -out="$PLAN_FILE" -no-color "$@" 2>&1 | tee "$TMP" > /dev/null
+STATUS=${PIPESTATUS[0]}
+
+# Exit codes: 0 = no changes, 2 = changes present, anything else = error
+if [ "$STATUS" -gt 2 ]; then
+  cat "$TMP"
+  exit "$STATUS"
+fi
+
+echo ""
+
+# Resource/data source change lines (the "# addr will be X" header lines)
+CHANGES=$(grep -E "^\s+#\s" "$TMP" | sed 's/^\s*#\s*/  /' || true)
+if [ -n "$CHANGES" ]; then
+  echo "=== Resources ==="
+  echo "$CHANGES"
+  echo ""
+fi
+
+# Outputs section — extract block between "Changes to Outputs:" and the separator
+if grep -q "^Changes to Outputs:" "$TMP"; then
+  echo "=== Outputs ==="
+  awk '/^Changes to Outputs:/{found=1; next} found && /^[[:space:]]*$/{exit} found{print}' "$TMP"
+  echo ""
+fi
+
+# Plan summary line
+grep -E "^Plan:|^No changes" "$TMP" || true
+
+echo ""
+echo "Saved: $PLAN_FILE"
+echo "Full diff:  terraform show $PLAN_FILE"
+echo "Apply:      terraform apply $PLAN_FILE"

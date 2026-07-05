@@ -1,7 +1,10 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+# Powerlevel10k instant prompt redirects stdin/stdout during init and injects
+# ANSI sequences that collide with VS Code's Terminal Shell Integration API
+# (and Claude Code's terminal parsing) — skip it entirely inside VS Code's
+# integrated terminal; keep the speed win everywhere else.
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+elif [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 

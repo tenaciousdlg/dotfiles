@@ -8,6 +8,7 @@ of sync.
 ## Layout
 
 - `.zshrc`, `.aliases`, `.gitconfig`, `.vimrc`, `.p10k.zsh`, `gitignore_global` (→ `~/.gitignore`) — symlinked directly into `$HOME`
+- `vscode/settings.json` — symlinked to VS Code's User settings (macOS path; skipped if VS Code isn't installed)
 - `.zshrc.local.example` — template for machine/account-specific values that shouldn't be public (real file lives at `~/.zshrc.local`, gitignored, sourced automatically if present)
 - `functions/*.zsh` — sourced automatically by `.zshrc`
 - `bin/*` — symlinked into `~/bin`

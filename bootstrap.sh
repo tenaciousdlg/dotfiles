@@ -28,6 +28,12 @@ link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 link "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 link "$DOTFILES_DIR/gitignore_global" "$HOME/.gitignore"
 
+VSCODE_USER_DIR="$HOME/Library/Application Support/Code/User"
+if [ -d "$VSCODE_USER_DIR" ]; then
+  mkdir -p "$VSCODE_USER_DIR"
+  link "$DOTFILES_DIR/vscode/settings.json" "$VSCODE_USER_DIR/settings.json"
+fi
+
 mkdir -p "$HOME/bin"
 for f in "$DOTFILES_DIR"/bin/*; do
   link "$f" "$HOME/bin/$(basename "$f")"

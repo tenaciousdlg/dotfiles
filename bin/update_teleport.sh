@@ -10,6 +10,13 @@ fi
 
 pkg="teleport-ent-${TF_VAR_teleport_version}.pkg"
 
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+cd "$workdir"
+
 curl -O "https://cdn.teleport.dev/${pkg}"
+curl -O "https://cdn.teleport.dev/${pkg}.sha256"
+shasum -a 256 -c "${pkg}.sha256"
+
 sudo installer -pkg "${pkg}" -target /
 which teleport

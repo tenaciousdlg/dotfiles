@@ -4,4 +4,4 @@
 [credential]
 	helper = osxkeychain
 [core]
-	excludesfile = /Users/dlg/.gitignore
+	excludesfile = ~/.gitignore

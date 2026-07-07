@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Global pre-commit hook (see core.hooksPath in .gitconfig) — scans staged
+# changes for secrets before they ever get committed, across every repo,
+# regardless of that repo's own .gitignore coverage.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "warning: gitleaks not installed — commit is NOT being scanned for secrets (brew install gitleaks)" >&2
+  exit 0
+fi
+
+gitleaks protect --staged --verbose --redact

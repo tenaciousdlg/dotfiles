@@ -13,6 +13,7 @@ of sync.
 - `functions/*.zsh` — sourced automatically by `.zshrc`
 - `bin/*` — symlinked into `~/bin`
 - `templates/` — reusable snippets to copy into other projects (not symlinked); see `templates/direnv-vault/README.md`
+- `hooks/pre-commit` — set as `core.hooksPath` in `.gitconfig`, so it runs before every commit in every repo on this machine
 
 ## Tools this config expects
 
@@ -20,6 +21,12 @@ of sync.
 env loading, kube context/namespace switching (`kctx`/`kns`), and fuzzy
 history/file search (Ctrl-R/Ctrl-T/Alt-C). All four are hooked into `.zshrc`
 behind `command -v` checks, so a machine without them just skips the hook.
+
+`brew install gitleaks` — scans staged changes for secrets before every
+commit, across every repo, regardless of that repo's own `.gitignore`
+coverage (`hooks/pre-commit`). If it's missing, the hook prints a warning
+and lets the commit through unscanned rather than blocking — install it
+rather than relying on that fallback.
 
 ## One-time CLI setup (not managed by bootstrap.sh)
 

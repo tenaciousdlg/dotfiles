@@ -12,7 +12,13 @@ alias tfteleport='eval "$(tctl terraform env)"'
 alias awswho="aws sts get-caller-identity"
 alias awslogin="aws sso login"
 alias awslogout="aws sso logout"
-alias ekslogin="aws eks update-kubeconfig --region us-east-2 --name presales-cluster"
+
+# Generic — real cluster-specific shortcut (e.g. ekslogin) lives in
+# .zshrc.local, not here, since a specific cluster name reveals internal
+# team context.
+eksuse() {
+  aws eks update-kubeconfig --region us-east-2 --name "$1"
+}
 
 # Teleport
 alias tinv="tctl inventory ls"

@@ -9,7 +9,8 @@
     "editor.fontLigatures": false,
     "terminal.integrated.enableMultiLinePasteWarning": false,
     "vs-kubernetes": {
-        "vscode-kubernetes.minikube-path-mac": "/Users/dlg/.vs-kubernetes/tools/minikube/darwin-arm64/minikube"
+        "vscode-kubernetes.minikube-path-mac": "/Users/dlg/.vs-kubernetes/tools/minikube/darwin-arm64/minikube",
+        "vscode-kubernetes.kubectl-path-mac": "/Users/dlg/.vs-kubernetes/tools/kubectl/kubectl"
     },
     "terminal.integrated.allowedLinkSchemes": [
         "file",
@@ -43,7 +44,7 @@
     "[go]": {
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports": "explicit"
         }
     },
     "terraform.validation.enableEnhancedValidation": true,
@@ -92,5 +93,15 @@
             ".continue/**/*.yaml"
         ]
     },
-    "claudeCode.environmentVariables": []
+    "claudeCode.environmentVariables": [],
+    "terminal.integrated.mouseWheelScrollSensitivity": 3,
+    "terminal.integrated.gpuAcceleration": "off",
+    "yaml.disableSchemaDetection": [
+        "**/.github/workflows/*.yml",
+        "**/.github/workflows/*.yaml",
+        "**/.gitea/workflows/*.yml",
+        "**/.gitea/workflows/*.yaml",
+        "**/.forgejo/workflows/*.yml",
+        "**/.forgejo/workflows/*.yaml"
+    ]
 }

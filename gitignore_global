@@ -26,3 +26,5 @@ node_modules
 
 # machine/account-specific shell overrides — see .zshrc.local.example
 .zshrc.local
+
+**/.claude/settings.local.json

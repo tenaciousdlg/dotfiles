@@ -39,4 +39,14 @@ for f in "$DOTFILES_DIR"/bin/*; do
   link "$f" "$HOME/bin/$(basename "$f")"
 done
 
+# teleport-zsh plugin (the .zshrc plugins list expects it under omz custom)
+OMZ_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [ -d "$OMZ_CUSTOM/plugins" ]; then
+  if [ -d "$HOME/github/teleport-zsh" ]; then
+    link "$HOME/github/teleport-zsh" "$OMZ_CUSTOM/plugins/teleport"
+  elif [ ! -e "$OMZ_CUSTOM/plugins/teleport" ]; then
+    git clone https://github.com/tenaciousdlg/teleport-zsh "$OMZ_CUSTOM/plugins/teleport"
+  fi
+fi
+
 echo "Done. Restart your shell or run: source ~/.zshrc"

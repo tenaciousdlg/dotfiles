@@ -31,3 +31,6 @@ tswitch() {
   tsh logout
   tlogin "$1"
 }
+
+_tlogin() { compadd blackhat presales gke dlg a4232 bold-truth }
+(( $+functions[compdef] )) && compdef _tlogin tlogin

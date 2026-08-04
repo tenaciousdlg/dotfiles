@@ -20,6 +20,7 @@ plugins=(
   kubectl
   minikube
   python
+  teleport
   terraform
   zsh-autosuggestions
   zsh-syntax-highlighting

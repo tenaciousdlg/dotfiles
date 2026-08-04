@@ -2,6 +2,9 @@
 # Update the case entries below as demo clusters come and go.
 tlogin() {
   case "$1" in
+    blackhat)
+      tsh login --proxy=blackhat.teleportdemo.com:443 blackhat.teleportdemo.com
+      ;;
     presales)
       tsh login --proxy=presales.teleportdemo.com:443 presales.teleportdemo.com --auth=okta-integrator
       ;;
@@ -18,7 +21,7 @@ tlogin() {
       tsh login --proxy=bold-truth.beams.run:443 --user=dlg@goteleport.com
       ;;
     *)
-      echo "usage: tlogin {presales|gke|dlg|a4232|bold-truth}" >&2
+      echo "usage: tlogin {blackhat|presales|gke|dlg|a4232|bold-truth}" >&2
       return 1
       ;;
   esac

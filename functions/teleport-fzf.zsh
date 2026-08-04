@@ -50,3 +50,10 @@ tapp() {
   print -s "tsh apps login ${app}"
   command tsh apps login ${app} && command tsh apps config ${app}
 }
+
+trec() {  # pick a session recording → tsh play (desktop recordings need the web UI)
+  local sid
+  sid=$(_tsh_fzf_pick recordings 60 recording command tsh recordings ls -f json) || return
+  print -s "tsh play ${sid}"
+  command tsh play ${sid}
+}

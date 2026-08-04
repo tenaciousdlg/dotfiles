@@ -139,3 +139,32 @@ prompt_teleport() {
 
 # Safe under p10k instant prompt: local files only, no side effects that matter.
 instant_prompt_teleport() { prompt_teleport }
+
+# One-shot expiry warnings: the prompt segment is passive; this taps you on
+# the shoulder exactly once per cert when it crosses <15m, and once when it
+# expires. A fresh login mints a new cert (new expiry) and re-arms both.
+typeset -gA _tp_warned
+
+_teleport_ttl_warn() {
+  local tdir=${TELEPORT_HOME:-$HOME/.tsh} prof
+  [[ -r $tdir/current-profile ]] || return 0
+  prof=$(<$tdir/current-profile)
+  [[ -n $prof ]] || return 0
+  local -a certs
+  certs=($tdir/keys/$prof/*.crt(N))
+  (( $#certs )) || return 0
+  _teleport_cert_meta "${certs[1]}" || return 0
+  local left=$(( _tp_expiry - EPOCHSECONDS ))
+  local key="${certs[1]}:${_tp_expiry}" short=${prof%%.*}
+  if (( left <= 0 )); then
+    [[ -n ${_tp_warned[${key}:expired]} ]] && return 0
+    _tp_warned[${key}:expired]=1
+    print -P "%F{1}⚠ teleport cert for ${short} has expired — tlogin ${short}%f"
+  elif (( left < 900 )); then
+    [[ -n ${_tp_warned[${key}:crit]} ]] && return 0
+    _tp_warned[${key}:crit]=1
+    print -P "%F{3}⚠ teleport cert for ${short} expires in $(( left / 60 ))m — finish up or tlogin ${short}%f"
+  fi
+}
+
+autoload -Uz add-zsh-hook 2>/dev/null && add-zsh-hook precmd _teleport_ttl_warn

@@ -47,11 +47,6 @@ fi
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# teleport-zsh cluster accents: blackhat=orange (booth, hands off),
-# presales=blue (test cluster), beams tenants=cyan. Red/yellow/magenta
-# are reserved (cert warnings, personas).
-typeset -ga TELEPORT_ZSH_CLUSTER_COLORS=('blackhat*' 208 'presales*' 4 '*.beams.run' 6)
-
 # zoxide: frecency-based `cd` (use `z <partial-name>`)
 command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
 

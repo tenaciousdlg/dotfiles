@@ -10,3 +10,18 @@ export AWS_PROFILE="<your-sso-profile-name>"
 # Some AWS SDKs (not just the CLI) only read ~/.aws/config profiles, not just
 # ~/.aws/credentials, when this is set — needed for AWS_PROFILE to fully work.
 export AWS_SDK_LOAD_CONFIG=1
+
+# Teleport cluster login shortcuts — real cluster hostnames live here, never
+# in the tracked repo. Pair with teleport-zsh's tcycle/tprofiles.
+tlogin() {
+  case "$1" in
+    demo)  tsh login --proxy=demo.example.com:443 demo.example.com ;;
+    stage) tsh login --proxy=stage.example.com:443 stage.example.com --auth=local ;;
+    *)     echo "usage: tlogin {demo|stage}" >&2; return 1 ;;
+  esac
+}
+_tlogin() { compadd demo stage }
+(( $+functions[compdef] )) && compdef _tlogin tlogin
+
+# teleport-zsh per-cluster prompt accents (see github.com/tenaciousdlg/teleport-zsh)
+typeset -ga TELEPORT_ZSH_CLUSTER_COLORS=('prod-*' 1 'stage*' 4)

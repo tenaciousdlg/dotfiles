@@ -2,6 +2,20 @@
 # Global pre-commit hook (see core.hooksPath in .gitconfig) — scans staged
 # changes for secrets before they ever get committed, across every repo,
 # regardless of that repo's own .gitignore coverage.
+#
+# Two tiers, picked by the repo's origin remote:
+#   private org remotes (globs in ~/.config/gitleaks/private-remotes)
+#       → base.toml: secrets + account IDs; org names/hostnames are
+#         legitimate in private org repos
+#   everything else (public/personal repos, no remote)
+#       → strict.toml: additionally blocks org identifiers, internal
+#         hostnames, work emails — the dummy-names policy, enforced
+#         mechanically
+#
+# All three files live in ~/.config/gitleaks/, OUTSIDE any repo, because
+# the rules and remote patterns contain the sensitive literals themselves.
+# Missing configs fall back to gitleaks defaults, so this degrades safely
+# on a fresh machine.
 set -euo pipefail
 
 if ! command -v gitleaks >/dev/null 2>&1; then
@@ -9,4 +23,22 @@ if ! command -v gitleaks >/dev/null 2>&1; then
   exit 0
 fi
 
-gitleaks protect --staged --verbose --redact
+cfgdir="$HOME/.config/gitleaks"
+remote="$(git remote get-url origin 2>/dev/null || true)"
+
+tier="strict"
+if [ -n "$remote" ] && [ -f "$cfgdir/private-remotes" ]; then
+  while IFS= read -r pat; do
+    [ -z "$pat" ] && continue
+    # shellcheck disable=SC2254 — patterns are meant to glob
+    case "$remote" in
+      $pat) tier="base"; break ;;
+    esac
+  done < "$cfgdir/private-remotes"
+fi
+
+if [ -f "$cfgdir/$tier.toml" ]; then
+  gitleaks protect --staged --verbose --redact --config "$cfgdir/$tier.toml"
+else
+  gitleaks protect --staged --verbose --redact
+fi

@@ -21,6 +21,7 @@ link() {
   echo "Linked $dest -> $src"
 }
 
+link "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
 link "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 link "$DOTFILES_DIR/.aliases" "$HOME/.aliases"
 link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"

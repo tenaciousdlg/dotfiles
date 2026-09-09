@@ -54,6 +54,9 @@ command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
 command -v direnv > /dev/null && eval "$(direnv hook zsh)"
 
 # fzf: fuzzy history/file search (Ctrl-R, Ctrl-T, Alt-C)
+# Ctrl-R matches exact substrings ("az" won't hit every a…z line);
+# prefix a term with ' to get fuzzy matching back for that query.
+export FZF_CTRL_R_OPTS="--exact"
 command -v fzf > /dev/null && eval "$(fzf --zsh)"
 
 # Google Cloud SDK

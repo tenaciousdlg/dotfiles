@@ -103,5 +103,7 @@
         "**/.gitea/workflows/*.yaml",
         "**/.forgejo/workflows/*.yml",
         "**/.forgejo/workflows/*.yaml"
-    ]
+    ],
+    "remote.SSH.enableRemoteCommand": true,
+    "markdown-preview-enhanced.codeBlockTheme": "auto.css"
 }

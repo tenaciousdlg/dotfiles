@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Pin the local Teleport client tools to whatever the PRIMARY cluster advertises.
+#
+# Background: TELEPORT_TOOLS_VERSION was set to `off` on 2026-09-09 because with
+# managed client updates on, EVERY cluster you connect to dictates the tsh /
+# Connect version. Hopping between clusters on different versions made tsh
+# re-download and swap binaries, and Connect relaunch itself, on every switch.
+#
+# `off` fixed the thrash but also meant no cluster could ever update the tools.
+# This script is the middle ground: one designated cluster decides, and the
+# others are ignored. Run it on a timer; .zshenv reads the cached value.
+#
+#   teleport-tools-sync          # refresh from the primary cluster
+#   teleport-tools-sync --show   # print what is cached now, refresh nothing
+#
+# If the primary is unreachable the cache is left alone, and if it has never
+# been written .zshenv falls back to `off` -- an offline primary must never
+# leave tsh unable to start.
+
+set -uo pipefail
+
+PRIMARY="${TELEPORT_PRIMARY_CLUSTER:-teleport.chrisdlg.com}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/teleport"
+CACHE="$CACHE_DIR/tools-version"
+
+if [ "${1:-}" = "--show" ]; then
+  if [ -s "$CACHE" ]; then
+    printf 'pinned to %s (from %s, %s)\n' "$(cat "$CACHE")" "$PRIMARY" \
+      "$(date -r "$CACHE" '+%Y-%m-%d %H:%M' 2>/dev/null || echo 'unknown time')"
+  else
+    printf 'no pin cached; TELEPORT_TOOLS_VERSION falls back to off\n'
+  fi
+  exit 0
+fi
+
+mkdir -p "$CACHE_DIR"
+
+find_json=$(curl -fsS --max-time 8 "https://${PRIMARY}/webapi/find" 2>/dev/null) || {
+  echo "teleport-tools-sync: ${PRIMARY} unreachable; keeping existing pin" >&2
+  exit 0
+}
+
+version=$(printf '%s' "$find_json" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+au = d.get("auto_update", {})
+# Only honour the cluster if it actually has tools updates switched on.
+# A cluster with them off should not silently pin us to its server version.
+print(au.get("tools_version", "") if au.get("tools_auto_update") else "")
+' 2>/dev/null)
+
+if [ -z "$version" ]; then
+  echo "teleport-tools-sync: ${PRIMARY} does not advertise tools updates; keeping existing pin" >&2
+  exit 0
+fi
+
+current=$(cat "$CACHE" 2>/dev/null || true)
+printf '%s' "$version" > "$CACHE"
+
+if [ "$current" != "$version" ]; then
+  echo "teleport-tools-sync: client tools pin ${current:-none} -> ${version} (from ${PRIMARY})"
+  echo "  open a new shell to pick it up; tsh will fetch ${version} on next use"
+fi

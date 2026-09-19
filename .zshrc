@@ -66,5 +66,17 @@ if [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/google-clou
 # Shell integration for VS Code
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
 
+# Keep the Teleport client-tools pin in step with the primary cluster, at most
+# once a day and always in the background -- this must never add latency to a
+# shell, and an unreachable cluster must never block one. See .zshenv.
+() {
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/teleport/tools-version"
+  local -a fresh
+  fresh=( ${cache}(Nmh-24) )          # exists and modified within 24h
+  if (( ! $#fresh )) && command -v teleport-tools-sync >/dev/null 2>&1; then
+    (teleport-tools-sync >/dev/null 2>&1 &)
+  fi
+}
+
 # Machine/account-specific overrides that shouldn't be public (see .zshrc.local.example)
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"

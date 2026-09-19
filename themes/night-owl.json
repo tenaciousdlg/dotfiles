@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Night Owl, as a single source of truth for terminal colours.",
+    "Matches the VS Code theme 'Night Owl (No Italics)' already in vscode/settings.json,",
+    "so editor / terminal / vault read as one environment.",
+    "Consumed by: Windows Terminal (schemes[]), iTerm2 (import via the generator below)."
+  ],
+  "name": "Night Owl",
+  "background": "#011627",
+  "foreground": "#d6deeb",
+  "cursorColor": "#80a4c2",
+  "selectionBackground": "#1d3b53",
+  "black": "#011627",
+  "red": "#ef5350",
+  "green": "#22da6e",
+  "yellow": "#addb67",
+  "blue": "#82aaff",
+  "purple": "#c792ea",
+  "cyan": "#21c7a8",
+  "white": "#ffffff",
+  "brightBlack": "#575656",
+  "brightRed": "#ef5350",
+  "brightGreen": "#22da6e",
+  "brightYellow": "#ffeb95",
+  "brightBlue": "#82aaff",
+  "brightPurple": "#c792ea",
+  "brightCyan": "#7fdbca",
+  "brightWhite": "#ffffff"
+}

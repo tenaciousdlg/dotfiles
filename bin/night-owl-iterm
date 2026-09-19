@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Generate an iTerm2 .itermcolors from themes/night-owl.json, the shared palette.
+# iTerm wants plist with 0-1 float components, so the hex has to be converted;
+# that conversion is the only reason this script exists rather than a checked-in
+# .itermcolors that would drift from the JSON.
+set -euo pipefail
+SRC="${1:-$HOME/github/dotfiles/themes/night-owl.json}"
+OUT="${2:-$HOME/Desktop/NightOwl.itermcolors}"
+python3 - "$SRC" "$OUT" <<'PY'
+import json, sys
+src, out = sys.argv[1], sys.argv[2]
+d = json.load(open(src))
+# iTerm's key names, in its own ANSI ordering.
+order = [("Ansi 0","black"),("Ansi 1","red"),("Ansi 2","green"),("Ansi 3","yellow"),
+         ("Ansi 4","blue"),("Ansi 5","purple"),("Ansi 6","cyan"),("Ansi 7","white"),
+         ("Ansi 8","brightBlack"),("Ansi 9","brightRed"),("Ansi 10","brightGreen"),
+         ("Ansi 11","brightYellow"),("Ansi 12","brightBlue"),("Ansi 13","brightPurple"),
+         ("Ansi 14","brightCyan"),("Ansi 15","brightWhite"),
+         ("Background","background"),("Foreground","foreground"),
+         ("Cursor","cursorColor"),("Selection","selectionBackground")]
+def comp(h):
+    h = h.lstrip("#")
+    return [int(h[i:i+2],16)/255.0 for i in (0,2,4)]
+body = []
+for key, name in order:
+    r,g,b = comp(d[name])
+    body.append(f"""	<key>{key} Color</key>
+	<dict>
+		<key>Color Space</key><string>sRGB</string>
+		<key>Red Component</key><real>{r:.6f}</real>
+		<key>Green Component</key><real>{g:.6f}</real>
+		<key>Blue Component</key><real>{b:.6f}</real>
+		<key>Alpha Component</key><real>1</real>
+	</dict>""")
+open(out,"w").write(
+'<?xml version="1.0" encoding="UTF-8"?>\n'
+'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+'<plist version="1.0">\n<dict>\n' + "\n".join(body) + '\n</dict>\n</plist>\n')
+print(f"  wrote {out} — iTerm2 > Settings > Profiles > Colors > Import")
+PY

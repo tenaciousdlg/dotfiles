@@ -1,0 +1,15 @@
+# Copy to ~/.gitconfig.local on each machine. Not tracked: this is where
+# anything machine-specific goes, so the shared .gitconfig stays portable.
+
+# macOS -- the system keychain.
+[credential]
+	helper = osxkeychain
+
+# Linux / WSL -- osxkeychain does not exist there. Either use SSH remotes and
+# set nothing, or cache in memory for a while:
+# [credential]
+#	helper = cache --timeout=3600
+
+# A different identity on a work machine, say:
+# [user]
+#	email = you@work.example.com

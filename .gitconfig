@@ -1,8 +1,15 @@
 [user]
 	name = chris de la garza
 	email = chris@chrisdlg.com
-[credential]
-	helper = osxkeychain
 [core]
 	excludesfile = ~/.gitignore
 	hooksPath = ~/github/dotfiles/hooks
+
+# Machine-specific settings live outside this repo, mirroring the
+# .zshrc / .zshrc.local split. credential.helper in particular is NOT portable:
+# osxkeychain exists only on macOS, and setting it on Linux leaves git unable
+# to authenticate at all. See .gitconfig.local.example.
+#
+# Keep this last: later includes win, so a machine can override anything above.
+[include]
+	path = ~/.gitconfig.local

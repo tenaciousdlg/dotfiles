@@ -29,6 +29,12 @@ link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 link "$DOTFILES_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
 link "$DOTFILES_DIR/gitignore_global" "$HOME/.gitignore"
 
+# Terraform reads ~/.terraformrc for the shared provider cache. The cache
+# directory has to exist before terraform will write to it, and terraform
+# will not create it.
+mkdir -p "$HOME/.terraform.d/plugin-cache"
+link "$DOTFILES_DIR/.terraformrc" "$HOME/.terraformrc"
+
 # VS Code's user dir differs per OS. Under WSL there usually ISN'T one — VS Code
 # runs on the Windows side and reaches in via Remote-WSL — so the -d guard below
 # simply skips this on that box rather than creating a directory nothing reads.

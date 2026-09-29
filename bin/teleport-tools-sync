@@ -19,7 +19,11 @@
 
 set -uo pipefail
 
-PRIMARY="${TELEPORT_PRIMARY_CLUSTER:-teleport.chrisdlg.com}"
+# Repointed 2026-09-28. This defaulted to the decommissioned cluster, so every
+# run since the cutover hit a dead host, took the "unreachable" branch and
+# silently kept whatever pin was already cached. It fails safe, which is why
+# nothing surfaced it.
+PRIMARY="${TELEPORT_PRIMARY_CLUSTER:-teleport.heronwright.com}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/teleport"
 CACHE="$CACHE_DIR/tools-version"
 

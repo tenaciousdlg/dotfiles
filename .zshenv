@@ -12,7 +12,7 @@ export TELEPORT_ADD_KEYS_TO_AGENT=no
 # 2026-09-09). `off` stopped that, but also meant nothing could ever update the
 # tools.
 #
-# Now teleport.chrisdlg.com is the primary/stable cluster and is the only one
+# Now teleport.heronwright.com is the primary/stable cluster and is the only one
 # allowed to move the version. `teleport-tools-sync` reads what it advertises
 # and caches it here; every other cluster is ignored because an explicit
 # version always wins over a cluster's own instruction.

@@ -3,10 +3,24 @@ alias tf="terraform"
 alias k="kubectl"
 alias awsh="ssh -i '$HOME/.ssh/dlg-aws.pem'"
 
-# Terraform demo lifecycle
+# Terraform demo lifecycle. Both reach the destroy guard in teleport-zsh:
+# the alias chain tfdown -> tf -> terraform resolves to the guard FUNCTION,
+# so --auto-approve does not skip its confirmation (verified 2026-09-28).
 alias tfup="tf apply --auto-approve"
 alias tfdown="tf destroy --auto-approve"
-alias tfteleport='eval "$(tctl terraform env)"'
+
+# NO tfteleport alias. `eval "$(tctl terraform env)"` is what Teleport's own
+# local-auth guide recommends, and it is deliberately not used here: it mints
+# a bot, a role and a token per run, which is three admin actions, and this
+# cluster enforces MFA on admin actions. Use tfenv instead -- it re-certs a
+# persistent Machine ID bot over its bound keypair (bots are exempt from that
+# gate) and exports the documented TF_TELEPORT_ADDR and
+# TF_TELEPORT_IDENTITY_FILE_PATH provider arguments:
+#
+#   source ~/github/teleport-zsh/lib/tfenv.zsh && tfenv heronwright
+#
+# Pass the cluster's FIRST DNS LABEL, never the word "teleport". See the
+# tfenv.zsh header for why that distinction bites.
 
 # AWS (relies on AWS_PROFILE being set — see .zshrc.local.example)
 alias awswho="aws sts get-caller-identity"

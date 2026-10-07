@@ -37,8 +37,24 @@ if [ -n "$remote" ] && [ -f "$cfgdir/private-remotes" ]; then
   done < "$cfgdir/private-remotes"
 fi
 
-if [ -f "$cfgdir/$tier.toml" ]; then
-  gitleaks protect --staged --verbose --redact --config "$cfgdir/$tier.toml"
-else
-  gitleaks protect --staged --verbose --redact
+cfgargs=()
+[ -f "$cfgdir/$tier.toml" ] && cfgargs=(--config "$cfgdir/$tier.toml")
+
+# A merge's staged diff (against HEAD) carries everything the incoming
+# branch brings, which is already committed elsewhere: merging a public
+# main into a PR branch tripped strict on text that main already published.
+# The only new content in a merge is ours plus the conflict resolutions,
+# so scan the lines added relative to each incoming parent.
+merge_head="$(git rev-parse --git-path MERGE_HEAD)"
+if [ -f "$merge_head" ]; then
+  rc=0
+  while IFS= read -r parent; do
+    [ -z "$parent" ] && continue
+    git diff --cached --unified=0 --no-color "$parent" \
+      | grep '^+' | grep -v '^+++' \
+      | gitleaks stdin --verbose --redact "${cfgargs[@]}" || rc=$?
+  done < "$merge_head"
+  exit "$rc"
 fi
+
+gitleaks protect --staged --verbose --redact "${cfgargs[@]}"

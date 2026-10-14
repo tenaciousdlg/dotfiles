@@ -95,7 +95,9 @@ myhelp() {
       for r in $rows; do
         grp=${r%%	*}; r=${r#*	}; kind=${r%%	*}; r=${r#*	}; name=${r%%	*}; desc=${r#*	}
         [[ $grp != $last ]] && { print -- "\n## $grp\n\n| name | kind | description |\n|---|---|---|"; last=$grp; }
-        print -- "| \`$name\` | $kind | ${desc//|/\\|} |"
+        # print -r: plain print treats \| as an escape and strips the backslash,
+        # which left a | in a description splitting the table row
+        print -r -- "| \`$name\` | $kind | ${desc//|/\\|} |"
       done
     } > $out
     print -P "\n%F{8}wrote ${out/#$HOME/~}%f"

@@ -21,22 +21,48 @@
 # LIMIT, from the permissions doc: deny rules cover Claude's file tools and the
 # Bash file commands it recognises (cat, head, tail, sed, tee, redirections),
 # not a script that opens files itself. OS-level enforcement is the sandbox.
+#
+# FALLBACK when prism or the Beams tenant is down:
+#   work-split --backend lgm     work sessions use lgm's local model instead,
+#                                through the tbot tunnel on 127.0.0.1:11434
+#   work-split --backend prism   back to Beams (the default)
+#   work-split --status          which backend is set, and whether each answers
+# The choice is saved in ~/github/work/.work-split-backend, so a plain re-run
+# after adding a repo keeps it. Only NEW sessions pick up a switch.
 set -euo pipefail
 
 ROOT=${WORK_SPLIT_ROOT:-$HOME/github}
 WORK=$ROOT/work
 AGENT_WORK=$ROOT/vault/agent/work   # work CLAUDE.md + memory, git-backed with the vault
 PRISM_URL=${PRISM_URL:-http://127.0.0.1:7331}
+LGM_URL=${LGM_URL:-http://127.0.0.1:11434}
+LGM_MODEL=${LGM_MODEL:-qwen3.5-sysad}   # num_ctx 65536 on lgm (homelab/lgm/sysad-agent.tf)
+STATE=$WORK/.work-split-backend
 
 [ -d "$WORK" ] || { echo "work-split: no $WORK" >&2; exit 1; }
+
+up() { curl -s -o /dev/null --max-time 5 -w '%{http_code}' "$1" 2>/dev/null | grep -q '^2'; }
+backend=$(cat "$STATE" 2>/dev/null || echo prism)
+case "${1:-}" in
+  --status)
+    printf 'backend: %s\n' "$backend"
+    up "$PRISM_URL/_prism/health" && echo "prism:   up   ($PRISM_URL)" || echo "prism:   DOWN ($PRISM_URL)"
+    up "$LGM_URL/api/version"     && echo "lgm:     up   ($LGM_URL, $LGM_MODEL)" || echo "lgm:     DOWN ($LGM_URL; is com.dlg.tbot-heronwright-ollama running?)"
+    exit 0 ;;
+  --backend)
+    case "${2:-}" in prism|lgm) backend=$2 ;; *) echo "usage: work-split [--backend prism|lgm | --status]" >&2; exit 2 ;; esac
+    echo "$backend" > "$STATE" ;;
+  "") ;;
+  *) echo "usage: work-split [--backend prism|lgm | --status]" >&2; exit 2 ;;
+esac
 mkdir -p "$AGENT_WORK/memory"
 
 locations=("$WORK")
 for d in "$WORK"/*/; do [ -d "$d/.git" ] && locations+=("${d%/}"); done
 
-python3 - "$ROOT" "$WORK" "$AGENT_WORK" "$PRISM_URL" "${locations[@]}" <<'PY'
+python3 - "$ROOT" "$WORK" "$AGENT_WORK" "$PRISM_URL" "$backend" "$LGM_URL" "$LGM_MODEL" "${locations[@]}" <<'PY'
 import json, os, sys
-root, work, agent_work, prism, *locations = sys.argv[1:]
+root, work, agent_work, prism, backend, lgm_url, lgm_model, *locations = sys.argv[1:]
 home = os.path.expanduser("~")
 
 def tilde(p):
@@ -63,8 +89,21 @@ for loc in locations:
     path = os.path.join(loc, ".claude", "settings.local.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     s = json.load(open(path)) if os.path.exists(path) else {}
-    s.setdefault("env", {}).update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_API_KEY": "teleport"})
-    s["env"].pop("ENABLE_CLAUDEAI_MCP_SERVERS", None)  # tried first; does nothing from settings
+    env = s.setdefault("env", {})
+    env.pop("ENABLE_CLAUDEAI_MCP_SERVERS", None)  # tried first; does nothing from settings
+    if backend == "lgm":
+        # Ollama's Anthropic port, per docs.ollama.com/integrations/claude-code.
+        # The context cap matches num_ctx: Claude Code does not know the model,
+        # assumes 200k, and would never compact before Ollama truncated.
+        env.update({"ANTHROPIC_BASE_URL": lgm_url, "ANTHROPIC_AUTH_TOKEN": "ollama",
+                    "ANTHROPIC_API_KEY": "", "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "65536"})
+        s["model"] = lgm_model
+    else:
+        env.update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_API_KEY": "teleport"})
+        for k in ("ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_MAX_CONTEXT_TOKENS"):
+            env.pop(k, None)
+        if s.get("model") == lgm_model:
+            s.pop("model")
     # claude.ai connectors OFF. Claude Code turns tool search off behind a
     # non-first-party ANTHROPIC_BASE_URL (code.claude.com/docs/en/mcp.md), so
     # every connector's tool schema rides inline on every request. Measured
@@ -78,5 +117,5 @@ for loc in locations:
     perms["deny"] = [r for r in perms.get("deny", []) if not owned(r)] + denies
     with open(path, "w") as f:
         json.dump(s, f, indent=2); f.write("\n")
-    print(f"wrote {tilde(path)}  ({len(denies)} deny rules)")
+    print(f"wrote {tilde(path)}  ({backend}, {len(denies)} deny rules)")
 PY

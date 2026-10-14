@@ -1,3 +1,4 @@
+# SSH to a GCE instance by name through gcloud, looking up its zone first.
 function gssh() {
   readonly local name="$1"
   local filter result instance_name zone

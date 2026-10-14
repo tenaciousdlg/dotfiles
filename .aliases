@@ -30,6 +30,8 @@ alias awslogout="aws sso logout"
 # Generic — real cluster-specific shortcut (e.g. ekslogin) lives in
 # .zshrc.local, not here, since a specific cluster name reveals internal
 # team context.
+
+# eksuse <cluster>: point kubectl at an EKS cluster in us-east-2.
 eksuse() {
   aws eks update-kubeconfig --region us-east-2 --name "$1"
 }

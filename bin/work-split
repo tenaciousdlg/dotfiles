@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# work-split: route Claude sessions under ~/github/work through prism (Beams) and keep them out of personal repos.
+# work-split [--backend prism|lgm | --status]: ~/github/work sessions via prism (Beams), lgm as fallback, personal repos fenced off.
 #
 # Personal is the default: nothing user-wide points at prism, so a session
 # started anywhere else never reaches Beams. Work opts in. Run this after

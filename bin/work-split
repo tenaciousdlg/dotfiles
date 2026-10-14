@@ -63,6 +63,11 @@ for d in "$WORK"/*/; do [ -d "$d/.git" ] && locations+=("${d%/}"); done
 python3 - "$ROOT" "$WORK" "$AGENT_WORK" "$PRISM_URL" "$backend" "$LGM_URL" "$LGM_MODEL" "${locations[@]}" <<'PY'
 import json, os, sys
 root, work, agent_work, prism, backend, lgm_url, lgm_model, *locations = sys.argv[1:]
+BEAMS_ALIASES = {
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-5",
+}
 home = os.path.expanduser("~")
 
 def tilde(p):
@@ -105,12 +110,22 @@ for loc in locations:
         env.update({"ANTHROPIC_BASE_URL": lgm_url, "ANTHROPIC_AUTH_TOKEN": "ollama",
                     "ANTHROPIC_API_KEY": "", "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "65536"})
         s["model"] = lgm_model
+        for k in BEAMS_ALIASES:
+            env.pop(k, None)
     else:
         env.update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_API_KEY": "teleport"})
         for k in ("ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_MAX_CONTEXT_TOKENS"):
             env.pop(k, None)
-        if s.get("model") == lgm_model:
-            s.pop("model")
+        # Name the models Beams actually serves. Beams SILENTLY substitutes any
+        # model it does not serve (probed 2026-10-14): Claude Code asked for
+        # claude-opus-5-5 and every reply came from claude-sonnet-5. The alias
+        # variables are documented (code.claude.com/docs/en/model-config.md);
+        # haiku covers "background functionality" and Beams has no Haiku, so it
+        # is named as the Sonnet 5 it would silently become anyway.
+        env.update(BEAMS_ALIASES)
+        # Start on Sonnet 5, which is what work sessions were already getting
+        # (Chris's 6 Oct pick); `/model opus` gives Opus 5.
+        s["model"] = os.environ.get("WORK_SPLIT_MODEL", "sonnet")
     # claude.ai connectors OFF. Claude Code turns tool search off behind a
     # non-first-party ANTHROPIC_BASE_URL (code.claude.com/docs/en/mcp.md), so
     # every connector's tool schema rides inline on every request. Measured

@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# work-split: route Claude sessions under ~/github/work through prism (Beams) and keep them out of personal repos.
+#
+# Personal is the default: nothing user-wide points at prism, so a session
+# started anywhere else never reaches Beams. Work opts in. Run this after
+# cloning or moving a repo into ~/github/work, or adding one to ~/github.
+#
+# Writes .claude/settings.local.json in ~/github/work AND in every git repo
+# directly under it, because Claude Code reads that file from the git root
+# and never from a parent folder (code.claude.com/docs/en/permissions.md,
+# and tested). Each file gets:
+#   env                  prism's Anthropic port, claude.ai connectors off
+#   claudeMdExcludes     drops ~/github/CLAUDE.md, the personal rules
+#   autoMemoryDirectory  one work memory store for every work session
+#   permissions.deny     Read and Edit on every personal entry in ~/github
+#
+# The deny list is computed at run time from what is in ~/github, so no repo
+# names live in this file. Other keys in an existing file, such as allow rules
+# a session added, are kept.
+#
+# LIMIT, from the permissions doc: deny rules cover Claude's file tools and the
+# Bash file commands it recognises (cat, head, tail, sed, tee, redirections),
+# not a script that opens files itself. OS-level enforcement is the sandbox.
+set -euo pipefail
+
+ROOT=${WORK_SPLIT_ROOT:-$HOME/github}
+WORK=$ROOT/work
+AGENT_WORK=$ROOT/vault/agent/work   # work CLAUDE.md + memory, git-backed with the vault
+PRISM_URL=${PRISM_URL:-http://127.0.0.1:7331}
+
+[ -d "$WORK" ] || { echo "work-split: no $WORK" >&2; exit 1; }
+mkdir -p "$AGENT_WORK/memory"
+
+locations=("$WORK")
+for d in "$WORK"/*/; do [ -d "$d/.git" ] && locations+=("${d%/}"); done
+
+python3 - "$ROOT" "$WORK" "$AGENT_WORK" "$PRISM_URL" "${locations[@]}" <<'PY'
+import json, os, sys
+root, work, agent_work, prism, *locations = sys.argv[1:]
+home = os.path.expanduser("~")
+
+def tilde(p):
+    return "~" + p[len(home):] if p.startswith(home + "/") else "/" + p
+
+# Every entry in ~/github except work/, descending into the two parents of the
+# work store so it stays writable (a deny always beats an allow).
+keep = {work, os.path.dirname(agent_work), os.path.dirname(os.path.dirname(agent_work)), agent_work}
+def personal(d):
+    for name in sorted(os.listdir(d)):
+        p = os.path.join(d, name)
+        if p in keep:
+            if p != agent_work and os.path.isdir(p):
+                yield from personal(p)
+            continue
+        yield p
+denies = []
+for p in personal(root):
+    t = tilde(p) + ("/**" if os.path.isdir(p) else "")
+    denies += [f"Read({t})", f"Edit({t})"]
+owned = lambda r: r.startswith(("Read(~/github/", "Edit(~/github/"))
+
+for loc in locations:
+    path = os.path.join(loc, ".claude", "settings.local.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    s = json.load(open(path)) if os.path.exists(path) else {}
+    s.setdefault("env", {}).update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_API_KEY": "teleport"})
+    s["env"].pop("ENABLE_CLAUDEAI_MCP_SERVERS", None)  # tried first; does nothing from settings
+    # claude.ai connectors OFF. Claude Code turns tool search off behind a
+    # non-first-party ANTHROPIC_BASE_URL (code.claude.com/docs/en/mcp.md), so
+    # every connector's tool schema rides inline on every request. Measured
+    # 2026-10-14, `claude -p 'say ok'` in rev-tech: 726 KB (~275k tokens) with
+    # them, 165 KB (~58k) without. `disableClaudeAiConnectors` is the
+    # documented settings key; WORK_SPLIT_CONNECTORS=1 keeps them.
+    s["disableClaudeAiConnectors"] = os.environ.get("WORK_SPLIT_CONNECTORS") != "1"
+    s["claudeMdExcludes"] = sorted(set(s.get("claudeMdExcludes", [])) | {os.path.join(root, "CLAUDE.md")})
+    s["autoMemoryDirectory"] = tilde(os.path.join(agent_work, "memory"))
+    perms = s.setdefault("permissions", {})
+    perms["deny"] = [r for r in perms.get("deny", []) if not owned(r)] + denies
+    with open(path, "w") as f:
+        json.dump(s, f, indent=2); f.write("\n")
+    print(f"wrote {tilde(path)}  ({len(denies)} deny rules)")
+PY

@@ -68,15 +68,22 @@ home = os.path.expanduser("~")
 def tilde(p):
     return "~" + p[len(home):] if p.startswith(home + "/") else "/" + p
 
-# Every entry in ~/github except work/, descending into the two parents of the
-# work store so it stays writable (a deny always beats an allow).
-keep = {work, os.path.dirname(agent_work), os.path.dirname(os.path.dirname(agent_work)), agent_work}
+# Every entry in ~/github except work/ itself. The vault is DESCENDED into, down
+# the path to the work store, so the store stays writable (a deny always beats
+# an allow) while the rest of the vault is denied.
+#
+# FIXED 2026-10-14: work/ used to be in the descend-into set too, so every work
+# REPO was denied Read/Edit and work sessions could not read their own code.
+# The first tests only proved personal paths were refused; the panel test,
+# which asked about a work repo, found it.
+descend = {os.path.dirname(agent_work), os.path.dirname(os.path.dirname(agent_work))}
 def personal(d):
     for name in sorted(os.listdir(d)):
         p = os.path.join(d, name)
-        if p in keep:
-            if p != agent_work and os.path.isdir(p):
-                yield from personal(p)
+        if p in (work, agent_work):
+            continue
+        if p in descend and os.path.isdir(p):
+            yield from personal(p)
             continue
         yield p
 denies = []

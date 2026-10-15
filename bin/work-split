@@ -48,12 +48,38 @@ case "${1:-}" in
     printf 'backend: %s\n' "$backend"
     up "$PRISM_URL/_prism/health" && echo "prism:   up   ($PRISM_URL)" || echo "prism:   DOWN ($PRISM_URL)"
     up "$LGM_URL/api/version"     && echo "lgm:     up   ($LGM_URL, $LGM_MODEL)" || echo "lgm:     DOWN ($LGM_URL; is com.dlg.tbot-heronwright-ollama running?)"
+    python3 -c 'import json,os; d=json.load(open(os.path.expanduser("~/.claude/settings.json"))); u=(d.get("env") or {}).get("ANTHROPIC_BASE_URL"); print("personal:", "lgm" if u and "11434" in u else ("subscription" if not u else u))' 
     exit 0 ;;
   --backend)
-    case "${2:-}" in prism|lgm) backend=$2 ;; *) echo "usage: work-split [--backend prism|lgm | --status]" >&2; exit 2 ;; esac
+    case "${2:-}" in prism|lgm) backend=$2 ;; *) echo "usage: work-split [--backend prism|lgm | --personal lgm|subscription | --status]" >&2; exit 2 ;; esac
     echo "$backend" > "$STATE" ;;
+  --personal)
+    # The USER-wide default, i.e. every session outside ~/github/work. Work
+    # sessions are unaffected: their local settings override it (and neutralise
+    # the two lgm-only variables, below). Run `--personal lgm` when the coding
+    # subscription ends (Fri 16 Oct): personal sessions then fail toward lgm,
+    # never toward Beams. `subscription` restores the pre-cutover state.
+    case "${2:-}" in lgm|subscription) ;; *) echo "usage: work-split --personal lgm|subscription" >&2; exit 2 ;; esac
+    python3 - "$2" "$LGM_URL" "$LGM_MODEL" "$HOME/.claude/settings.json" <<'PY'
+import json, sys, shutil, time
+mode, lgm_url, lgm_model, path = sys.argv[1:]
+shutil.copy2(path, f"{path}.bak-{time.strftime('%Y%m%d%H%M%S')}")
+s = json.load(open(path)); env = s.setdefault("env", {})
+keys = ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "CLAUDE_CODE_MAX_CONTEXT_TOKENS")
+if mode == "lgm":
+    env.update({"ANTHROPIC_BASE_URL": lgm_url, "ANTHROPIC_AUTH_TOKEN": "ollama",
+                "ANTHROPIC_API_KEY": "", "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "65536"})
+    s["model"] = lgm_model
+else:
+    for k in keys: env.pop(k, None)
+    if not env: s.pop("env")
+    s["model"] = "opus"
+json.dump(s, open(path, "w"), indent=2); open(path, "a").write("\n")
+print(f"personal default: {mode} (~/.claude/settings.json; previous copy kept as .bak-*). New sessions only.")
+PY
+    exit 0 ;;
   "") ;;
-  *) echo "usage: work-split [--backend prism|lgm | --status]" >&2; exit 2 ;;
+  *) echo "usage: work-split [--backend prism|lgm | --personal lgm|subscription | --status]" >&2; exit 2 ;;
 esac
 mkdir -p "$AGENT_WORK/memory"
 
@@ -113,9 +139,15 @@ for loc in locations:
         for k in BEAMS_ALIASES:
             env.pop(k, None)
     else:
-        env.update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_API_KEY": "teleport"})
-        for k in ("ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_MAX_CONTEXT_TOKENS"):
-            env.pop(k, None)
+        # prism's key goes in as a BEARER (AUTH_TOKEN), not ANTHROPIC_API_KEY.
+        # Tested 2026-10-15 with no subscription login (Friday's state): with
+        # the key as ANTHROPIC_API_KEY from settings, `claude -p` says "Not
+        # logged in" and never calls prism; as ANTHROPIC_AUTH_TOKEN it works.
+        # Sessions only worked before because the subscription login was there.
+        # API_KEY and MAX_CONTEXT_TOKENS are "" rather than removed so a
+        # user-wide `--personal lgm` default cannot leak lgm's 64k cap in.
+        env.update({"ANTHROPIC_BASE_URL": prism, "ANTHROPIC_AUTH_TOKEN": "teleport",
+                    "ANTHROPIC_API_KEY": "", "CLAUDE_CODE_MAX_CONTEXT_TOKENS": ""})
         # Name the models Beams actually serves. Beams SILENTLY substitutes any
         # model it does not serve (probed 2026-10-14): Claude Code asked for
         # claude-opus-5-5 and every reply came from claude-sonnet-5. The alias

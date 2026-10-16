@@ -42,6 +42,23 @@ az config set core.only_show_errors=true
 az config set core.collect_telemetry=no
 ```
 
+## Restoring a Mac's apps and tools
+
+`Brewfile` and `vscode/extensions.txt` are snapshots of the last Mac
+(regenerate with `brew bundle dump --force --file=Brewfile --no-vscode` and
+`code --list-extensions > vscode/extensions.txt`). On a new one:
+
+```bash
+brew bundle --file=~/github/dotfiles/Brewfile
+xargs -L1 code --install-extension < ~/github/dotfiles/vscode/extensions.txt
+go install golang.org/x/tools/cmd/goimports@latest golang.org/x/tools/gopls@latest honnef.co/go/tools/cmd/staticcheck@latest
+npm install -g repomix
+bun install -g @oh-my-pi/pi-coding-agent
+```
+
+Jamf-managed apps (Chrome, Docker, Office, Zoom, Slack, 1Password ...) come
+from Self Service, not from the Brewfile.
+
 ## Install
 
 ```bash

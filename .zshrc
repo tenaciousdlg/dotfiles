@@ -29,7 +29,11 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
-export VAULT_ADDR='http://127.0.0.1:8200'
+# Vault lives on hollowtree (CT115, homelab/vault) since 2026-10-16, not in a
+# Docker container on the laptop. TLS with a private CA: copy it once per Mac,
+#   ssh root@hollowtree 'pct exec 115 -- cat /opt/vault/tls/ca.crt' > ~/.config/vault/ca.pem
+export VAULT_ADDR='https://vault.localdomain:8200'
+export VAULT_CACERT="$HOME/.config/vault/ca.pem"
 export PATH="$PATH:$HOME/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
